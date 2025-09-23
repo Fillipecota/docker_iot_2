@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>IoT Devices Dashboard</title>
+<style>
+  :root{ --bg:#0b0e14; --card:#111827; --muted:#9ca3af; --ink:#e5e7eb; --border:#334155; --pane:#0f172a; --ok:#34d399; --err:#f87171 }
+  *{box-sizing:border-box}
+  body{font-family:ui-sans-serif,system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0;min-height:100vh}
+  h1,h2,h3{margin: 8px 0}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .pill{font-size:12px;padding:4px 8px;border-radius:999px;background:var(--pane);border:1px solid var(--border);color:var(--ink)}
+  input,button{padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--pane);color:var(--ink)}
+  button{background:#2563eb;border:none;cursor:pointer}
+  .muted{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat( auto-fill, minmax(300px, 1fr) );gap:14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .badge{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--pane)}
+  .ok{color:var(--ok)} .err{color:var(--err)}
+  .section{background:var(--pane);border:1px dashed #374151;padding:10px;border-radius:12px}
+  .kv{display:grid;grid-template-columns:110px 1fr;gap:6px;align-items:center}
+  .k{font-size:12px;color:#a1a1aa}
+  .v{font-size:12px}
+  .controls{display:grid;grid-template-columns:1fr;gap:10px}
+  .control-card{background:linear-gradient(180deg,#0d1321,#0c111b);border:1px dashed #374151;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .control-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .led-dot{width:18px;height:18px;border-radius:50%;box-shadow: inset 0 0 8px rgba(0,0,0,.45)}
+  .led-on{background: radial-gradient(closest-side,#fffbd1 0%,#fde047 60%,#111827 100%); box-shadow: 0 0 10px rgba(255,241,118,.5)}
+  .led-off{background:#1f2937}
+  .led-item{border-top:1px dashed #374151;padding-top:8px;margin-top:8px}
+  .led-item:first-child{border-top:none;padding-top:0;margin-top:0}
+  .servo-angle{font-size:12px;color:#a1a1aa}
+  .footer{margin-top:14px;display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .disabled{opacity:.45; filter:saturate(.5)}
+  code{background:#0b1220;border:1px solid #1e293b;padding:2px 6px;border-radius:6px}
+  .empty{border:1px dashed #334155;border-radius:12px;padding:16px;text-align:center;color:#94a3b8}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <h1>📡 IoT Devices Dashboard</h1>
+      <div style="display:flex;gap:10px;align-items:center;margin-left:auto">
+        <span class="k muted">API</span>
+        <input id="apiBase" value="http://localhost:1880" placeholder="(auto) http(s)://host:port" style="min-width:260px" />
+        <button id="btnConnect">Conectar</button>
+        <button id="btnDisconnect">Desconectar</button>
+        <div id="conn" class="muted">❌ Desconectado</div>
+      </div>
+    </div>
+
+    <div class="toolbar section">
+      <div class="row">
+        <span id="sumAll" class="pill">0 dispositivos</span>
+        <span id="sumOn" class="pill">0 online</span>
+        <span id="sumOff" class="pill">0 offline</span>
+      </div>
+    </div>
+
+    <div id="cards" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">Sem dispositivos ainda. Abra o <b>Device Simulator</b> e conecte 🙂</div>
+  </div>
+
+  <script>
+  const devices = new Map();
+  let ws = null;
+  let API_BASE = '';
+
+  const $ = (id)=>document.getElementById(id);
+  const connEl = $("conn"), cardsEl = $("cards"), emptyEl = $("empty");
+  const sumAll = $("sumAll"), sumOn = $("sumOn"), sumOff = $("sumOff");
+
+  function now(){ return Date.now(); }
+  const ONLINE_WINDOW = 30000; // 30s
+
+  function resolveApiBase(){
+    const manual = ( $("apiBase").value || '' ).trim();
+    if(manual) return manual.replace(/\/$/, '');
+    return location.origin; // padrão
+  }
+  function wsUrlFromBase(base){ return base.replace(/^http/i,'ws') + '/ws/devices'; }
+
+  // --- Modelo ---
+  function upsertDeviceDoc(doc){
+    const id = doc.device_id || doc.id; if(!id) return;
+    if(!devices.has(id)){
+      devices.set(id, {
+        id,
+        model: doc.model || null,
+        firmware: doc.firmware || null,
+        ip_address: doc.ip_address || null,
+        location: doc.location || null,
+        status: { online: !!doc.status?.online, last_seen: doc.status?.last_seen || null, last_info_ts: doc.status?.last_info_ts || null },
+        state: doc.state || { leds:{led_1:false,led_2:false,led_3:false,led_4:false}, servo_1:0, motor1:false, sensors:{}, updated_at:null },
+        components: doc.components || {
+          sensors: [ { key: 'temperature', kind: 'number', unit: '°C', min: 0, max: 80 } ],
+          actuators: [
+            { key: 'led_1', kind: 'switch' },
+            { key: 'led_2', kind: 'switch' },
+            { key: 'led_3', kind: 'switch' },
+            { key: 'led_4', kind: 'switch' },
+            { key: 'servo_1', kind: 'servo', min: 0, max: 180 },
+            { key: 'motor1',  kind: 'switch' }
+          ]
+        },
+        created_at: doc.created_at || null,
+        updated_at: doc.updated_at || null
+      });
+    } else {
+      const d = devices.get(id);
+      d.model = doc.model ?? d.model;
+      d.firmware = doc.firmware ?? d.firmware;
+      d.ip_address = doc.ip_address ?? d.ip_address;
+      d.location = doc.location ?? d.location;
+      if(doc.status){ d.status = { ...d.status, ...doc.status }; }
+      if(doc.state){ d.state = { ...d.state, ...doc.state, leds: { ...d.state.leds, ...(doc.state.leds||{}) }, sensors: { ...(d.state.sensors||{}), ...(doc.state.sensors||{}) } }; }
+      if(doc.components){ d.components = doc.components; }
+      d.updated_at = doc.updated_at ?? d.updated_at;
+    }
+  }
+
+  function computeOnline(d){
+    const last = d.status?.last_seen ? new Date(d.status.last_seen).getTime() : 0;
+    d.status.online = (now() - last) < ONLINE_WINDOW;
+  }
+
+  function render(){
+    const list = Array.from(devices.values());
+    if(list.length===0){ cardsEl.innerHTML=''; emptyEl.style.display='block'; updateSums(); return; }
+    emptyEl.style.display='none';
+
+    list.forEach(computeOnline);
+    list.sort((a,b)=> (b.status.online - a.status.online) || a.id.localeCompare(b.id) );
+
+    const html = list.map(d=>{
+      const cls = d.status.online ? '' : 'disabled';
+      const temp = d.state?.sensors?.temperature;
+      const tempStr = temp ? `${temp.value}${temp.unit?(' '+temp.unit):''}` : '—';
+      const tempTime = temp?.updated_at ? new Date(temp.updated_at).toLocaleTimeString() : '—';
+      return `
+      <div class="card ${cls}" id="card-${d.id}">
+        <div class="row" style="justify-content:space-between">
+          <div class="row">
+            <h3 style="margin:0">🔧 ${d.id}</h3>
+            <span class="badge ${d.status.online?'ok':'err'}">${d.status.online?'ATIVO':'OFFLINE'}</span>
+          </div>
+          <button onclick="requestSnapshot('${d.id}')" title="Solicitar atualização rápida" ${d.status.online?'':'disabled'}>Atualizar</button>
+        </div>
+        <div class="section kv">
+          <div class="k">IP</div><div class="v"><code>${d.ip_address||'—'}</code></div>
+          <div class="k">Local</div><div class="v">${d.location||'—'}</div>
+          <div class="k">Firmware</div><div class="v">${d.firmware||'—'}</div>
+          <div class="k">Último evento</div><div class="v">${d.status.last_seen? new Date(d.status.last_seen).toLocaleTimeString(): '—'}</div>
+        </div>
+        <div class="controls">
+          <div class="control-card">
+            <div class="control-row"><b>Sensores</b><span class="muted" style="font-size:12px">temperature</span></div>
+            <div class="control-row led-item">
+              <div class="row" style="gap:8px">
+                <span style="min-width:110px">Temperatura</span>
+                <span class="pill">${tempStr}</span>
+              </div>
+              <div class="muted" style="font-size:11px">Atualizado: ${tempTime}</div>
+            </div>
+          </div>
+          <div class="control-card">
+            <div class="control-row"><b>LEDs</b><span class="muted" style="font-size:12px">led_1..led_4</span></div>
+            ${['led_1','led_2','led_3','led_4'].map(key=>`
+              <div class="control-row led-item">
+                <div class="row" style="gap:8px">
+                  <div class="led-dot ${(d.state.leds?.[key])?'led-on':'led-off'}"></div>
+                  <span style="min-width:60px">${key}</span>
+                </div>
+                <div class="row" style="flex-direction:rpw;gap:6px">
+                  <button onclick="sendToggle('${d.id}','${key}', true)" ${d.status.online?'':'disabled'}>Ligar</button>
+                  <button onclick="sendToggle('${d.id}','${key}', false)" ${d.status.online?'':'disabled'}>Desligar</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="control-card">
+            <div class="control-row"><b>Servo</b><span class="servo-angle">${d.state.servo_1|0}°</span></div>
+            <input type="range" min="0" max="180" step="1" value="${d.state.servo_1|0}" oninput="sendServo('${d.id}', this.value)" ${d.status.online?'':'disabled'} />
+            <div class="control-row led-item"><b>Motor</b>
+              <div class="row" style="flex-direction:row;gap:6px">
+                <button onclick="sendToggle('${d.id}','motor1', true)" ${d.status.online?'':'disabled'}>Ligar</button>
+                <button onclick="sendToggle('${d.id}','motor1', false)" ${d.status.online?'':'disabled'}>Desligar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    cardsEl.innerHTML = html;
+    updateSums();
+  }
+
+  function updateSums(){
+    const all = devices.size;
+    let on=0, off=0; devices.forEach(d=>{ if(d.status?.online) on++; else off++; });
+    sumAll.textContent = `${all} dispositivo${all===1?'':'s'}`;
+    sumOn.textContent = `${on} online`;
+    sumOff.textContent = `${off} offline`;
+  }
+
+  async function getJSON(url){ const r = await fetch(url, {headers:{'Accept':'application/json'}}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+  async function postJSON(url, body){ const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()); return r.json().catch(()=>({ok:true})); }
+
+  async function connect(){
+    API_BASE = resolveApiBase();
+    if(ws && (ws.readyState===WebSocket.OPEN || ws.readyState===WebSocket.CONNECTING)) return;
+
+    connEl.textContent = 'conectando...'; connEl.className='muted';
+
+    try{
+      const initial = await getJSON(`${API_BASE}/api/devices`);
+      (initial||[]).forEach(doc => upsertDeviceDoc(doc));
+      render();
+    }catch(e){ }
+
+    const url = wsUrlFromBase(API_BASE);
+    ws = new WebSocket(url);
+
+    ws.addEventListener('open', ()=>{ connEl.textContent='✅ Conectado'; connEl.className='ok'; });
+    ws.addEventListener('close', ()=>{ connEl.textContent='❌ Desconectado'; connEl.className='muted'; });
+    ws.addEventListener('error', ()=>{ connEl.textContent='Erro WS'; connEl.className='err'; });
+
+    ws.addEventListener('message', (ev)=>{
+      try{
+        const evt = JSON.parse(ev.data||'{}');
+        const id = evt.id || evt.device_id; if(!id) return;
+        const kind = evt.kind;
+        const retain = !!evt.retain;
+        const data = evt.data || {};
+
+        if(kind==='upsert' || kind==='info'){
+          if(kind==='upsert') upsertDeviceDoc(data);
+          else upsertDeviceDoc({ device_id: id, ...data });
+        } else if(kind==='status'){
+          const existing = devices.get(id); if(!existing) upsertDeviceDoc({ device_id:id });
+          const d = devices.get(id);
+          if(data.type==='state'){
+            if(data.target && data.target.startsWith('led_')) d.state.leds[data.target] = (data.state==='on');
+            if(data.target==='servo_1' && Number.isFinite(+data.angle)) d.state.servo_1 = +data.angle;
+            if(data.target==='motor1' && data.state) d.state.motor1 = (data.state==='on');
+          } else if(data.type==='snapshot'){
+            if(data.leds) d.state.leds = { ...d.state.leds, ...data.leds };
+            if(Number.isFinite(+data.servo_1)) d.state.servo_1 = +data.servo_1;
+            if(typeof data.motor1==='boolean') d.state.motor1 = data.motor1;
+          } // ping = presença
+          if(!retain){ d.status.last_seen = new Date().toISOString(); }
+        } else if(kind==='telemetry'){
+          const existing = devices.get(id); if(!existing) upsertDeviceDoc({ device_id:id });
+          const d = devices.get(id);
+          if(data.sensor){
+            d.state.sensors = d.state.sensors || {};
+            d.state.sensors[data.sensor] = { value: data.value, unit: data.unit || null, updated_at: new Date().toISOString() };
+          }
+          if(!retain){ d.status.last_seen = new Date().toISOString(); }
+        } else if(kind==='ack'){
+          const existing = devices.get(id); if(!existing) upsertDeviceDoc({ device_id:id });
+          const d = devices.get(id);
+          if(data.target && data.action==='set'){
+            if(data.target.startsWith('led_')) d.state.leds[data.target] = (data.state==='on');
+            if(data.target==='servo_1' && Number.isFinite(+data.angle)) d.state.servo_1 = +data.angle;
+            if(data.target==='motor1' && data.state) d.state.motor1 = (data.state==='on');
+          }
+          if(!retain){ d.status.last_seen = new Date().toISOString(); }
+        }
+        render();
+      }catch(e){ /* ignore */ }
+    });
+  }
+
+  function disconnect(){ if(ws){ try{ ws.close(); }catch{} } }
+
+  function corr(){ return Math.random().toString(36).slice(2,8)+'-'+Date.now().toString(36); }
+  function cmdUrl(id){ return `${API_BASE}/api/devices/${encodeURIComponent(id)}/cmd`; }
+
+  window.sendToggle = async (id, target, on)=>{
+    const d = devices.get(id); if(!d || !d.status.online) return;
+    try{ await postJSON(cmdUrl(id), { target, on, corr:corr() }); }catch(e){ console.error(e); }
+  };
+
+  window.sendServo = async (id, angle)=>{
+    const d = devices.get(id); if(!d || !d.status.online) return;
+    angle = Math.max(0, Math.min(180, +angle|0));
+    try{ await postJSON(cmdUrl(id), { target:'servo_1', angle, corr:corr() }); }catch(e){ console.error(e); }
+  };
+
+  window.requestSnapshot = async (id)=>{
+    const d = devices.get(id); if(!d || !d.status.online) return;
+    try{ await postJSON(cmdUrl(id), { target:'led_1', on: !!d.state.leds.led_1, corr:corr() }); }catch(e){ console.error(e); }
+  };
+
+  $("btnConnect").onclick = connect;
+  $("btnDisconnect").onclick = disconnect;
+
+  render();
+  </script>
+</body>
+</html>

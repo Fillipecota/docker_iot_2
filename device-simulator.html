@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Device Simulator</title>
+<style>
+  :root{ --bg:#0b0e14; --card:#111827; --muted:#9ca3af; --ink:#e5e7eb; --border:#334155; --pane:#0f172a }
+  *{box-sizing:border-box}
+  body{font-family:ui-sans-serif,system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0;display:grid;place-items:center;min-height:100vh}
+  h3{margin: 8px 0px;} h2{margin: 8px 0px;}
+  .card{background:var(--card);padding:20px;border-radius:16px;width:min(92vw,980px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+  .box{background:var(--pane);border:1px solid var(--border);border-radius:12px;padding:12px}
+  input,button{padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--pane);color:var(--ink)}
+  button{background:#2563eb;border:none;cursor:pointer}
+  .pill{font-size:12px;padding:4px 8px;border-radius:999px;background:var(--pane);border:1px solid var(--border)}
+  .ok{color:#34d399}.err{color:#f87171}.muted{color:var(--muted)}
+  code{background:#0b1220;border:1px solid #1e293b;padding:2px 6px;border-radius:6px}
+
+  .led-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .lamp-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+  .label-id{font-size:11px;color:#a1a1aa;margin-bottom:2px}
+  .lamp-row{display:flex;align-items:center;gap:10px}
+  .lamp{width:52px;height:52px;border-radius:50%;
+        background: radial-gradient(closest-side,#1f2937 0%,#111827 70%);
+        box-shadow: inset 0 0 26px rgba(0,0,0,.6), 0 6px 22px rgba(0,0,0,.35);
+        transition: all .2s ease}
+  .lamp.on{background: radial-gradient(closest-side,#fffbd1 0%,#fef08a 35%,#fde047 60%,#111827 100%);
+           box-shadow: 0 0 24px rgba(255,241,118,.6), 0 0 70px rgba(255,241,118,.35)}
+
+  .servo-box{position:relative;width:320px;height:190px;border:1px dashed #374151;border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#0d1321,#0c111b)}
+  .servo-base{position:absolute;bottom:22px;width:160px;height:18px;background:#111827;border:1px solid #1f2937;border-radius:8px;left:50%;transform:translateX(-50%)}
+  .servo-arm{position:absolute;bottom:30px;left:50%;width:4px;height:105px;background:#9ca3af;border-radius:4px;transform-origin:bottom center;transform:translateX(-50%) rotate(-90deg);transition:transform .2s ease}
+  .servo-tip{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:#d1d5db;border:1px solid #6b7280}
+  .servo-angle{position:absolute;top:8px;right:10px;font-size:12px;color:#a1a1aa}
+
+  .motor-box{position:relative;width:320px;height:190px;border:1px dashed #374151;border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,#0d1321,#0c111b)}
+  .motor-housing{position:absolute;width:120px;height:46px;background:#1f2937;border:1px solid #374151;border-radius:10px;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .motor-shaft{position:absolute;left:50%;top:50%;width:14px;height:10px;background:#9ca3af;border-radius:3px;transform:translate(48px,-5px)}
+  .rotor{position:absolute;left:50%;top:50%;width:110px;height:110px;transform:translate(-50%,-50%);border:3px solid #9ca3af;border-radius:50%;display:grid;place-items:center}
+  .rotor-inner{width:100%;height:100%;display:grid;place-items:center;transform-origin:50% 50%}
+  .rotor-inner::before{content:"";width:76px;height:4px;background:#9ca3af;display:block}
+  .spin .rotor-inner{animation: spin 0.9s linear infinite}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .motor-state{position:absolute;bottom:8px;right:8px}
+
+  ul.topics{list-style:none;padding-left:12px;margin:0;display:grid;gap:4px}
+  ul.topics li::before{content:"• ";color:#64748b}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+      <h2>🧪 Device Simulator</h2>
+      <div id="conn" class="muted" style="align-self:center; margin-left:auto">❌ Desconectado</div>
+    </div>
+
+    <div class="row box">
+      <div style="flex:1">
+        <div>ID do dispositivo</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="devId" value="esp32-001" />
+          <span class="pill">IP base: 192.169.100.</span>
+          <input id="ipTail" value="42" style="width:80px" placeholder="X (0-255)" />
+          <input id="location" placeholder="Localização (ex: Biblioteca 1º Andar)" style="min-width:220px" />
+          <span id="deviceMeta" class="pill">fw — • ip —</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:end">
+        <button id="btnConn">Conectar</button>
+        <button id="btnDisc">Desconectar</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="box" style="flex:1">
+        <h3>Sensor</h3>
+        <div class="muted" style="margin-bottom:6px">Temperatura</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input id="tempSlider" type="range" min="10" max="40" step="0.1" value="24" style="flex:1" />
+          <span id="tVal" class="pill">24.0 °C</span>
+        </div>
+      </div>
+
+      <div class="box" style="flex:1">
+        <h3>Atuadores</h3>
+        <div class="led-grid">
+          <div class="lamp-card">
+            <div class="label-id">ID: <code>led_1</code></div>
+            <div class="lamp-row"><div id="lamp1" class="lamp"></div><span id="led1Txt" class="pill">off</span></div>
+          </div>
+          <div class="lamp-card">
+            <div class="label-id">ID: <code>led_2</code></div>
+            <div class="lamp-row"><div id="lamp2" class="lamp"></div><span id="led2Txt" class="pill">off</span></div>
+          </div>
+          <div class="lamp-card">
+            <div class="label-id">ID: <code>led_3</code></div>
+            <div class="lamp-row"><div id="lamp3" class="lamp"></div><span id="led3Txt" class="pill">off</span></div>
+          </div>
+          <div class="lamp-card">
+            <div class="label-id">ID: <code>led_4</code></div>
+            <div class="lamp-row"><div id="lamp4" class="lamp"></div><span id="led4Txt" class="pill">off</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="box" style="flex:1">
+        <h3>Servo <span class="label-id">(ID: <code>servo_1</code>)</span></h3>
+        <div class="servo-box">
+          <div class="servo-angle"><span id="servoDeg">0°</span></div>
+          <div id="servoArm" class="servo-arm"><div class="servo-tip"></div></div>
+          <div class="servo-base"></div>
+        </div>
+      </div>
+
+      <div class="box" style="flex:1">
+        <h3>Motor CC <span class="label-id">(ID: <code>motor1</code>)</span></h3>
+        <div class="motor-box">
+          <div class="motor-housing"></div>
+          <div class="motor-shaft"></div>
+          <div id="rotor" class="rotor"><div id="rotorInner" class="rotor-inner"></div></div>
+          <span id="motorTxt" class="pill motor-state">off</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="box" style="flex:1">
+        <h3>Tópicos</h3>
+        <div style="display:flex; gap:16px; flex-wrap:wrap">
+          <div style="flex:1"><b>Subscribe</b><ul id="subsList" class="topics"></ul></div>
+          <div style="flex:1"><b>Publish</b><ul id="pubList" class="topics"></ul></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="log" class="muted" style="margin-top:10px;font-size:12px">pronto</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
+  <script>
+    const URL = 'ws://localhost:9001/mqtt';
+    const MQTT_OPTS_BASE = { username:'aluno', password:'aluno123', clean:true, keepalive:60, protocolVersion:4 };
+
+    const el=id=>document.getElementById(id);
+    const conn=el('conn'),logEl=el('log');
+
+    const tempSlider=el('tempSlider'),tVal=el('tVal');
+    const lamp1=el('lamp1'),lamp2=el('lamp2'),lamp3=el('lamp3'),lamp4=el('lamp4');
+    const led1Txt=el('led1Txt'),led2Txt=el('led2Txt'),led3Txt=el('led3Txt'),led4Txt=el('led4Txt');
+    const servoArm=el('servoArm'),servoDeg=el('servoDeg');
+    const rotor=el('rotor'),rotorInner=el('rotorInner'),motorTxt=el('motorTxt');
+    const subsList=el('subsList'),pubList=el('pubList');
+    const deviceMetaEl = el('deviceMeta');
+    const ipTailEl = el('ipTail');
+    const locationEl = el('location');
+
+    let client=null,TOPICS=null, presenceTimer=null, telemetryTimer=null;
+    const STATE={led_1:false,led_2:false,led_3:false,led_4:false,servo_1:0,motor1:false};
+
+    const FIRMWARE_VERSION = "fw-1.0.0";
+
+    function log(txt,cls='muted'){logEl.textContent=txt;logEl.className=cls;}
+
+    function topicsFor(id){return {
+      cmd:       `device/${id}/cmd`,
+      status:    `device/${id}/status`,
+      ack:       `device/${id}/ack`,
+      telemetry: `device/${id}/telemetry`,
+      info:      `device/${id}/info`
+    }}
+
+    function renderTopics(){
+      subsList.innerHTML = `<li><code>${TOPICS.cmd}</code></li>`;
+      pubList.innerHTML  = `
+        <li><code>${TOPICS.status}</code></li>
+        <li><code>${TOPICS.ack}</code></li>
+        <li><code>${TOPICS.telemetry}</code></li>
+        <li><code>${TOPICS.info} (retained)</code></li>`;
+    }
+
+    function setLamp(id,on){
+      const map={led_1:lamp1,led_2:lamp2,led_3:lamp3,led_4:lamp4};
+      const txtMap={led_1:led1Txt,led_2:led2Txt,led_3:led3Txt,led_4:led4Txt};
+      map[id].classList.toggle('on',on); txtMap[id].textContent = on?'on':'off';
+    }
+    function setServo(angle){ const visual=(angle-90); servoArm.style.transform=`translateX(-50%) rotate(${visual}deg)`; servoDeg.textContent=`${angle|0}°`; }
+    function setMotor(on){ rotor.classList.toggle('spin',on); motorTxt.textContent=on?'on':'off'; }
+
+    function publish(topic,obj,{qos=1,retain=false}={}){ if(!client) return; client.publish(topic,JSON.stringify(obj),{qos,retain}); }
+    function publishAck(evt){ publish(TOPICS.ack, evt, {qos:1,retain:false}); }
+    function publishStatus(evt,{retain=false}={}){ publish(TOPICS.status, evt, {retain}); }
+
+    function buildInfoPayload(deviceId){
+      const tail = Math.max(0, Math.min(255, parseInt(ipTailEl.value||'0',10) || 0));
+      const ip = `192.169.100.${tail}`;
+      const location = (locationEl.value||'').trim() || null;
+      const obj = {
+        device_id: deviceId,
+        model: 'esp32',
+        firmware: FIRMWARE_VERSION,
+        ip_address: ip,
+        location: location
+      };
+      deviceMetaEl.textContent = `fw ${obj.firmware} • ip ${obj.ip_address}${location?` • ${location}`:''}`;
+      return obj;
+    }
+
+    function publishInfo(deviceId){
+      const payload = buildInfoPayload(deviceId);
+      publish(TOPICS.info, payload, { qos:1, retain:true }); // retained para Node-RED upsert no devices
+    }
+
+    function publishSnapshotNoRetain(){
+      publishStatus({type:'snapshot', ts:Date.now(),
+        leds:{led_1:STATE.led_1,led_2:STATE.led_2,led_3:STATE.led_3,led_4:STATE.led_4},
+        servo_1: STATE.servo_1,
+        motor1: STATE.motor1
+      }, {retain:false});
+    }
+
+    function startPresence(){
+      stopPresence();
+      presenceTimer = setInterval(()=>{
+        publishStatus({ type:'ping', ts: Date.now() }, { retain:false });
+      }, 30000); // 30s
+    }
+    function stopPresence(){ if(presenceTimer) clearInterval(presenceTimer); presenceTimer=null; }
+
+    function startTelemetry(){
+      stopTelemetry();
+      telemetryTimer = setInterval(()=>{
+        const temp=+tempSlider.value; tVal.textContent=`${temp.toFixed(1)} °C`;
+        publish(TOPICS.telemetry, { sensor:'temperature', value: temp, unit:'°C', ts: Date.now() }, { qos:0, retain:false });
+      }, 15000); // 15s
+    }
+    function stopTelemetry(){ if(telemetryTimer) clearInterval(telemetryTimer); telemetryTimer=null; }
+
+    function handleCmd(topic,buf){
+      let msg={}; try{ msg=JSON.parse(buf.toString()||'{}'); }catch{}
+      const target = msg.target; const corr = msg.corr || null;
+      if(!target) return;
+
+      if(target.startsWith('led_')){
+        const cur = STATE[target];
+        const next = (typeof msg.on==='boolean') ? msg.on : (msg.toggle===true ? !cur : cur);
+        STATE[target] = next; setLamp(target,next);
+        publishStatus({ type:'state', target, state: next?'on':'off', ts:Date.now() }, {retain:false});
+        publishAck({ ok:true, corr, target, action:'set', state: next?'on':'off', ts:Date.now() });
+      } else if(target==='servo_1'){
+        if(Number.isFinite(+msg.angle)) STATE.servo_1 = Math.max(0,Math.min(180,+msg.angle));
+        setServo(STATE.servo_1);
+        publishStatus({ type:'state', target, angle: STATE.servo_1, ts:Date.now() }, {retain:false});
+        publishAck({ ok:true, corr, target, action:'set', angle: STATE.servo_1, ts:Date.now() });
+      } else if(target==='motor1'){
+        const cur = STATE.motor1;
+        const next = (typeof msg.on==='boolean') ? msg.on : (msg.toggle===true ? !cur : cur);
+        STATE.motor1 = next; setMotor(next);
+        publishStatus({ type:'state', target, state: next?'on':'off', ts:Date.now() }, {retain:false});
+        publishAck({ ok:true, corr, target, action:'set', state: next?'on':'off', ts:Date.now() });
+      }
+    }
+
+    tempSlider.addEventListener('input',()=>{
+      const temp=+tempSlider.value; tVal.textContent=`${temp.toFixed(1)} °C`;
+      publish(TOPICS?.telemetry, { sensor:'temperature', value: temp, unit:'°C', ts: Date.now() }, { qos:0, retain:false });
+    });
+
+    el('btnConn').onclick=()=>{
+      if(client && client.connected) return log('Já conectado.', 'muted');
+      const deviceId = el('devId').value.trim() || 'esp32-001';
+      TOPICS = topicsFor(deviceId); renderTopics();
+      const cid = `${deviceId}-web-${Date.now().toString(36)}-${Math.random().toString(16).slice(2,8)}`;
+      const options = { ...MQTT_OPTS_BASE, clientId: cid };
+      log(`Conectando em ${URL} como ${options.clientId} ...`, 'muted');
+      client = mqtt.connect(URL, options);
+      client.on('connect', () => {
+        log('Conectado ✅', 'ok'); conn.textContent='✅ Conectado'; conn.className='ok';
+        client.subscribe([TOPICS.cmd], {qos:1}, (err)=>{
+          if(err) log('Erro ao assinar cmd', 'err');
+          publishSnapshotNoRetain();    // 1) snapshot inicial
+          publishInfo(deviceId);        // 2) info retained para upsert em devices
+          const temp=+tempSlider.value; // 3) telemetria inicial
+          publish(TOPICS.telemetry,{sensor:'temperature', value: temp, unit:'°C', ts: Date.now()},{qos:0, retain:false});
+          startPresence();              // 4) presença a cada 30s (status/ping)
+          startTelemetry();            // 5) telemetria periódica 15s
+        });
+      });
+      client.on('reconnect',()=>log('Reconectando...','muted'));
+      client.on('close',()=>{log('Conexão fechada.','muted');conn.textContent='❌ Desconectado';conn.className='muted'; stopPresence(); stopTelemetry();});
+      client.on('error',e=>{log('Erro: '+e.message,'err');conn.textContent='erro';conn.className='err';});
+      client.on('message',handleCmd);
+    };
+
+    el('btnDisc').onclick=()=>{ if(client){ client.end(true); log('Desconectando...','muted'); stopPresence(); stopTelemetry(); } };
+
+    (function initUI(){ el('deviceMeta').textContent = 'fw — • ip —'; })();
+    setServo(0); setMotor(false);
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
     {
         "id": "8296850d5b2a0086",
         "type": "tab",
-        "label": "Fluxo 1",
+        "label": "IOT->MQTT -> BB ->WS",
         "disabled": false,
         "info": "",
         "env": []
@@ -44,9 +44,9 @@
         "name": "ConectionMongoDB",
         "protocol": "mongodb",
         "hostname": "mongo",
-        "port": "",
-        "dbName": "27017",
-        "appName": "iot_2",
+        "port": "27017",
+        "dbName": "iot_2",
+        "appName": "",
         "authSource": "",
         "authMechanism": "DEFAULT",
         "tls": false,
@@ -66,20 +66,20 @@
         "id": "b726d9293ec91073",
         "type": "mqtt in",
         "z": "8296850d5b2a0086",
-        "name": "",
-        "topic": "#",
-        "qos": "0",
+        "name": "Device info",
+        "topic": "device/+/info",
+        "qos": "1",
         "datatype": "auto-detect",
         "broker": "a8b67da708f56ade",
         "nl": false,
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 170,
-        "y": 180,
+        "x": 200,
+        "y": 220,
         "wires": [
             [
-                "1d96d36157604c81"
+                "f47cb856e7b5d1d3"
             ]
         ]
     },
@@ -96,55 +96,184 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 460,
+        "x": 680,
         "y": 180,
         "wires": []
     },
     {
-        "id": "50a9b337f3e0a1dd",
-        "type": "inject",
+        "id": "d44b9084ae352cb0",
+        "type": "function",
         "z": "8296850d5b2a0086",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "{\"teste\":\"ok\"}",
-        "payloadType": "json",
-        "x": 230,
-        "y": 300,
+        "name": "Parse info -> Device Upsert +// WS",
+        "func": "const deviceId = msg.payload.device_id;\nif (!deviceId) return null;\n\nmsg.collection = 'devices';\nmsg.operation = 'updateOne';\n\nconst update = {\n    $set: {\n        device_id: deviceId,\n        model: msg.payload.model || null,\n        firmware: msg.payload.firmware || null,\n        ip_address: msg.payload.ip_address || null,\n        location: msg.payload.location || null,\n        update_at: new Date(),\n        status: {\n            last_info_ts: new Date(),\n        },\n        raw: JSON.stringify(msg.payload)\n    },\n    $setOnInsert: { created_at: new Date(), _id: msg.payload._id }\n}\n\nmsg.payload = [{ device_Id: deviceId }, update, { upsert: true }];\n\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 220,
         "wires": [
             [
-                "86918bd91fa1ae3a"
+                "d396e6e9ecf5a313"
             ]
         ]
     },
     {
-        "id": "08aaff4a54f4133d",
+        "id": "d396e6e9ecf5a313",
         "type": "mongodb4",
         "z": "8296850d5b2a0086",
         "clientNode": "7ab9877dcbdd2e1e",
         "mode": "collection",
-        "collection": "testes",
+        "collection": "device",
         "operation": "insertOne",
         "output": "toArray",
         "maxTimeMS": "0",
         "handleDocId": false,
-        "name": "",
-        "x": 560,
-        "y": 300,
+        "name": "Device",
+        "x": 930,
+        "y": 360,
         "wires": [
             []
         ]
     },
     {
-        "id": "86918bd91fa1ae3a",
+        "id": "f47cb856e7b5d1d3",
+        "type": "uuid",
+        "z": "8296850d5b2a0086",
+        "uuidVersion": "v4",
+        "namespaceType": "",
+        "namespace": "",
+        "namespaceCustom": "",
+        "name": "",
+        "field": "payload._id",
+        "fieldType": "msg",
+        "x": 370,
+        "y": 220,
+        "wires": [
+            [
+                "d44b9084ae352cb0"
+            ]
+        ]
+    },
+    {
+        "id": "7a6edb5a1deae9c2",
+        "type": "mqtt in",
+        "z": "8296850d5b2a0086",
+        "name": "device Status",
+        "topic": "device/+/status",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "a8b67da708f56ade",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 210,
+        "y": 360,
+        "wires": [
+            [
+                "241a7508d33e76b6"
+            ]
+        ]
+    },
+    {
+        "id": "2f3e970353d0b9fa",
+        "type": "debug",
+        "z": "8296850d5b2a0086",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "a521598c92e65cbb",
+        "type": "function",
+        "z": "8296850d5b2a0086",
+        "name": "Parse Status -> Ws",
+        "func": "// payload: { type:'state'|'snapshot'|'ping', ... }\nconst retain = !!msg.retain;\nlet data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\nconst parts = (msg.topic || '').split('/');\nconst device_id = parts[1];\nif (!device_id) return null;\n\nconst now = new Date();\nconst set = { 'status.last_seen': now, updated_at: now };\n\nif (data.type === 'state') {\n    if (data.target && data.target.startsWith('led_')) {\n        set[`state.leds.${data.target}`] = (data.state === 'on');\n    }\n\n    if (data.target === 'servo_1' && Number.isFinite(+data.angle)) {\n        set['state.servo_1'] = +data.angle;\n    }\n    \n    if (data.target === 'motor1' && data.state) {\n        set['state.motor1'] = (data.state === 'on');\n    }\n    set['state.updated_at'] = now;\n} else if (data.type === 'snapshot') {\n    if (data.leds) {\n        for (const k of Object.keys(data.leds)) {\n            set[`state.leds.${k}`] = !!data.leds[k];\n        };\n    }\n\n    if (Number.isFinite(+data.servo_1)) {\n        set['state.servo_1'] = +data.servo_1;\n    }\n\n    if (typeof data.motor1 === 'boolean') {\n        set['state.motor1'] = data.motor1;\n    }\n\n    set['state.updated_at'] = now;\n} else if (data.type === 'ping') {\n    // presença apenas\n}\n\nmsg.collection = 'devices';\nmsg.operation = 'updateOne';\nmsg.payload = [\n    { device_id },\n    { $set: set, $setOnInsert: { created_at: now, device_id, _id: msg.payload._id } },\n    { upsert: true }];\nmsg._wsEvent = { kind: 'status', id: device_id, data, retain };\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 360,
+        "wires": [
+            [
+                "d396e6e9ecf5a313"
+            ]
+        ]
+    },
+    {
+        "id": "241a7508d33e76b6",
+        "type": "uuid",
+        "z": "8296850d5b2a0086",
+        "uuidVersion": "v4",
+        "namespaceType": "",
+        "namespace": "",
+        "namespaceCustom": "",
+        "name": "",
+        "field": "payload._id",
+        "fieldType": "msg",
+        "x": 370,
+        "y": 360,
+        "wires": [
+            [
+                "a521598c92e65cbb"
+            ]
+        ]
+    },
+    {
+        "id": "07035a4d8f1d5aaa",
+        "type": "mqtt in",
+        "z": "8296850d5b2a0086",
+        "name": "Device Telemetry",
+        "topic": "device/+/telemetry",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "a8b67da708f56ade",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 220,
+        "y": 460,
+        "wires": [
+            [
+                "f6faf0c080be5f66"
+            ]
+        ]
+    },
+    {
+        "id": "5648bc75da3bc912",
+        "type": "debug",
+        "z": "8296850d5b2a0086",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "f6faf0c080be5f66",
         "type": "uuid",
         "z": "8296850d5b2a0086",
         "uuidVersion": "v4",
@@ -155,11 +284,52 @@
         "field": "payload._id",
         "fieldType": "msg",
         "x": 390,
-        "y": 300,
+        "y": 460,
         "wires": [
             [
-                "08aaff4a54f4133d"
+                "b67cdc54c42e74ca"
             ]
+        ]
+    },
+    {
+        "id": "b67cdc54c42e74ca",
+        "type": "function",
+        "z": "8296850d5b2a0086",
+        "name": "function 1",
+        "func": "let data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\n\nconst device_id = (msg.topic || '').split(\"/\")[1];\nif (!device_id) return null;\n\nconst obj = {\n    device_id,\n    sensor: msg.payload.sensor || 'unlnown',\n    unit: msg.payload.unit || null,\n    value: msg.payload.value || null,\n    created_at: new Date(msg.payload.ts || Date.now()),\n    sourcer: 'telemetry'\n}\n\nconst reading = {\n    collection: 'reading',\n    operation: 'insertOne',\n    payload: obj\n}\n\nconst device = {\n    collection: 'devices',\n    operation: 'updatedOne',\n    payload: [\n        { device_id },\n        { $set: { 'status.last_seen': new Date(), updated_at: new Date() }, $setOnInsert: { created_at: new Date(), device_id } },\n        { upsert: true }\n    ]\n}\n\nreturn [device, reading];\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 460,
+        "wires": [
+            [
+                "d396e6e9ecf5a313"
+            ],
+            [
+                "ab4ca7b8f0c5a55f"
+            ]
+        ]
+    },
+    {
+        "id": "ab4ca7b8f0c5a55f",
+        "type": "mongodb4",
+        "z": "8296850d5b2a0086",
+        "clientNode": "7ab9877dcbdd2e1e",
+        "mode": "collection",
+        "collection": "",
+        "operation": "",
+        "output": "toArray",
+        "maxTimeMS": "0",
+        "handleDocId": false,
+        "name": "Reading",
+        "x": 940,
+        "y": 460,
+        "wires": [
+            []
         ]
     }
 ]

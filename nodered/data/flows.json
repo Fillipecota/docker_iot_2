@@ -8,6 +8,14 @@
         "env": []
     },
     {
+        "id": "1e3fa613f886d610",
+        "type": "tab",
+        "label": "IOT HTTP",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "a8b67da708f56ade",
         "type": "mqtt-broker",
         "name": "Broker",
@@ -97,7 +105,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 680,
-        "y": 180,
+        "y": 160,
         "wires": []
     },
     {
@@ -126,8 +134,8 @@
         "z": "8296850d5b2a0086",
         "clientNode": "7ab9877dcbdd2e1e",
         "mode": "collection",
-        "collection": "device",
-        "operation": "insertOne",
+        "collection": "",
+        "operation": "",
         "output": "toArray",
         "maxTimeMS": "0",
         "handleDocId": false,
@@ -192,7 +200,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 660,
-        "y": 320,
+        "y": 300,
         "wires": []
     },
     {
@@ -269,7 +277,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 660,
-        "y": 420,
+        "y": 400,
         "wires": []
     },
     {
@@ -295,15 +303,15 @@
         "id": "b67cdc54c42e74ca",
         "type": "function",
         "z": "8296850d5b2a0086",
-        "name": "function 1",
-        "func": "let data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\n\nconst device_id = (msg.topic || '').split(\"/\")[1];\nif (!device_id) return null;\n\nconst obj = {\n    device_id,\n    sensor: msg.payload.sensor || 'unlnown',\n    unit: msg.payload.unit || null,\n    value: msg.payload.value || null,\n    created_at: new Date(msg.payload.ts || Date.now()),\n    sourcer: 'telemetry'\n}\n\nconst reading = {\n    collection: 'reading',\n    operation: 'insertOne',\n    payload: obj\n}\n\nconst device = {\n    collection: 'devices',\n    operation: 'updatedOne',\n    payload: [\n        { device_id },\n        { $set: { 'status.last_seen': new Date(), updated_at: new Date() }, $setOnInsert: { created_at: new Date(), device_id } },\n        { upsert: true }\n    ]\n}\n\nreturn [device, reading];\n",
+        "name": "Parse Telemetry -> Ws",
+        "func": "let data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\n\nconst device_id = (msg.topic || '').split(\"/\")[1];\nif (!device_id) return null;\n\nconst obj = {\n    _id: msg.payload._id,\n    device_id,\n    sensor: msg.payload.sensor || 'unlnown',\n    unit: msg.payload.unit || null,\n    value: msg.payload.value || null,\n    created_at: new Date(msg.payload.ts || Date.now()),\n    sourcer: 'telemetry'\n}\n\nconst reading = {\n    collection: 'reading',\n    operation: 'insertOne',\n    payload: obj\n}\n\nconst device = {\n    collection: 'devices',\n    operation: 'updateOne',\n    payload: [\n        { device_id },\n        { $set: { 'status.last_seen': new Date(), updated_at: new Date() }, $setOnInsert: { created_at: new Date(), device_id, _id:msg.payload._id } },\n        { upsert: true }\n    ]\n}\n\nreturn [device, reading];\n",
         "outputs": 2,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 680,
+        "x": 640,
         "y": 460,
         "wires": [
             [
@@ -330,6 +338,223 @@
         "y": 460,
         "wires": [
             []
+        ]
+    },
+    {
+        "id": "084c2cdb55742081",
+        "type": "mqtt in",
+        "z": "8296850d5b2a0086",
+        "name": "Device Ack",
+        "topic": "device/+/ack",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "a8b67da708f56ade",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1706eeaa49be5468",
+        "type": "http in",
+        "z": "1e3fa613f886d610",
+        "name": "GET Devices",
+        "url": "/api/devices",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 140,
+        "wires": [
+            [
+                "a487a5c0bf9aca6e"
+            ]
+        ]
+    },
+    {
+        "id": "a487a5c0bf9aca6e",
+        "type": "function",
+        "z": "1e3fa613f886d610",
+        "name": "Find All Devices",
+        "func": "msg.collection = \"devices\";\nmsg.operation = \"find\";\nmsg.payload = [{}, { sort: { 'status.online': -1, device_id: 1 } }]\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 140,
+        "wires": [
+            [
+                "f63528665c9c5410"
+            ]
+        ]
+    },
+    {
+        "id": "f63528665c9c5410",
+        "type": "mongodb4",
+        "z": "1e3fa613f886d610",
+        "clientNode": "7ab9877dcbdd2e1e",
+        "mode": "collection",
+        "collection": "",
+        "operation": "",
+        "output": "toArray",
+        "maxTimeMS": "0",
+        "handleDocId": false,
+        "name": "Devices",
+        "x": 560,
+        "y": 140,
+        "wires": [
+            [
+                "b6d0a1c5d3f46528"
+            ]
+        ]
+    },
+    {
+        "id": "b6d0a1c5d3f46528",
+        "type": "http response",
+        "z": "1e3fa613f886d610",
+        "name": "REPLY - 200 JSON",
+        "statusCode": "",
+        "headers": {
+            "Content-type": "application/json"
+        },
+        "x": 750,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "1d115fb089fe0782",
+        "type": "http in",
+        "z": "1e3fa613f886d610",
+        "name": "POST Command",
+        "url": "/api/devices/:id/cmd",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 300,
+        "wires": [
+            [
+                "af760d4aa961f916"
+            ]
+        ]
+    },
+    {
+        "id": "57f09b2267123b35",
+        "type": "debug",
+        "z": "1e3fa613f886d610",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 400,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "9e3ddca0fe5dfe8e",
+        "type": "function",
+        "z": "1e3fa613f886d610",
+        "name": "Create Commands",
+        "func": "const deviceId = msg.req.params.id;\nconst command = msg.req.body;\n\nconst value = (typeof command.on === 'boolean') ? { on: command.on } : { angle: + command.angle };\n\nconst commandDb = {\n    _id: msg.payload._id,\n    deviceId: deviceId,\n    target: command.target,\n    payload: value,\n    corr: command.corr,\n    request_by: 'dashboard',\n    request_at: new Date(),\n    ack: null,\n    status: 'sent',\n    delivery: {\n        sent_ts: new Date()\n    },\n    error: null\n}\n\nconst msgInsert = {\n    collection: \"commands\",\n    operation: \"insertOne\",\n    payload: [commandDb]\n}\n\nconst httpResponse = {\n    statusCode: 200,\n    payload: { ok: true, corr: commandDb.corr }\n}\n\nconst publishMqtt = {\n    topic: `device/${deviceId}/cmd`,\n    payload: {\n        target: command.target,\n        ...value,\n        corr: command.corr\n    },\n    qos: 1,\n    retain: false\n}\n\nreturn [msgInsert, httpResponse, publishMqtt];",
+        "outputs": 3,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 300,
+        "wires": [
+            [
+                "45fcc875714f71e7"
+            ],
+            [
+                "0cf865ff8f73a792"
+            ],
+            [
+                "590b47d4d0c857f5"
+            ]
+        ]
+    },
+    {
+        "id": "45fcc875714f71e7",
+        "type": "mongodb4",
+        "z": "1e3fa613f886d610",
+        "clientNode": "7ab9877dcbdd2e1e",
+        "mode": "collection",
+        "collection": "",
+        "operation": "",
+        "output": "toArray",
+        "maxTimeMS": "0",
+        "handleDocId": false,
+        "name": "Commands",
+        "x": 830,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0cf865ff8f73a792",
+        "type": "http response",
+        "z": "1e3fa613f886d610",
+        "name": "REPLY - 200",
+        "statusCode": "",
+        "headers": {},
+        "x": 830,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "590b47d4d0c857f5",
+        "type": "mqtt out",
+        "z": "1e3fa613f886d610",
+        "name": "Send Command",
+        "topic": "",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "a8b67da708f56ade",
+        "x": 820,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "af760d4aa961f916",
+        "type": "uuid",
+        "z": "1e3fa613f886d610",
+        "uuidVersion": "v4",
+        "namespaceType": "",
+        "namespace": "",
+        "namespaceCustom": "",
+        "name": "",
+        "field": "payload._id",
+        "fieldType": "msg",
+        "x": 390,
+        "y": 300,
+        "wires": [
+            [
+                "9e3ddca0fe5dfe8e"
+            ]
         ]
     }
 ]

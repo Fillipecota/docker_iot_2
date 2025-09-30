@@ -622,3 +622,197 @@ To fix this, use `chmod 0700 /mosquitto/config/passwd`.
 1758675650: Client nodered6e9552f6b1373d39 disconnected.
 1758675651: mosquitto version 2.0.22 terminating
 1758675651: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1759182677: mosquitto version 2.0.22 starting
+1759182677: Config loaded from /mosquitto/config/mosquitto.conf.
+1759182677: Warning: File /mosquitto/config/passwd has world readable permissions. Future versions will refuse to load this file.
+To fix this, use `chmod 0700 /mosquitto/config/passwd`.
+1759182677: Opening ipv4 listen socket on port 1883.
+1759182677: Opening websockets listen socket on port 9001.
+1759182677: mosquitto version 2.0.22 running
+1759182689: New connection from 172.18.0.4:57392 on port 1883.
+1759182689: New client connected from 172.18.0.4:57392 as nodered3287780098c7832c (p2, c1, k60, u'aluno').
+1759183971: Client nodered3287780098c7832c disconnected.
+1759183972: mosquitto version 2.0.22 terminating
+1759183972: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1759183976: mosquitto version 2.0.22 starting
+1759183976: Config loaded from /mosquitto/config/mosquitto.conf.
+1759183976: Warning: File /mosquitto/config/passwd has world readable permissions. Future versions will refuse to load this file.
+To fix this, use `chmod 0700 /mosquitto/config/passwd`.
+1759183976: Opening ipv4 listen socket on port 1883.
+1759183976: Opening websockets listen socket on port 9001.
+1759183976: mosquitto version 2.0.22 running
+1759183985: New connection from 172.18.0.4:55930 on port 1883.
+1759183985: New client connected from 172.18.0.4:55930 as nodered0e7dd84cb583e928 (p2, c1, k60, u'aluno').
+1759184052: New client connected from 172.18.0.1:33072 as esp32-001-web-mg5orif6-17f8c3 (p2, c1, k60, u'aluno').
+1759184121: Client esp32-001-web-mg5orif6-17f8c3 closed its connection.
+1759184122: New client connected from 172.18.0.1:40910 as esp32-001-web-mg5ot0c1-f2a9b8 (p2, c1, k60, u'aluno').
+1759184484: Client esp32-001-web-mg5ot0c1-f2a9b8 closed its connection.
+1759184633: New client connected from 172.18.0.1:33722 as esp32-001-web-mg5ot0c1-f2a9b8 (p2, c1, k60, u'aluno').
+1759184693: Client esp32-001-web-mg5ot0c1-f2a9b8 closed its connection.
+1759184753: New client connected from 172.18.0.1:49340 as esp32-001-web-mg5ot0c1-f2a9b8 (p2, c1, k60, u'aluno').
+1759184780: Client nodered0e7dd84cb583e928 disconnected.
+1759184780: New connection from 172.18.0.4:42116 on port 1883.
+1759184780: New client connected from 172.18.0.4:42116 as noderedb3ec551af8a9b612 (p2, c1, k60, u'aluno').
+1759184802: Client esp32-001-web-mg5ot0c1-f2a9b8 closed its connection.
+1759184802: New client connected from 172.18.0.1:45306 as esp32-001-web-mg5ot0c1-f2a9b8 (p2, c1, k60, u'aluno').
+1759185098: Client noderedb3ec551af8a9b612 disconnected.
+1759185098: New connection from 172.18.0.4:50066 on port 1883.
+1759185098: New client connected from 172.18.0.4:50066 as nodered36100986961aaa39 (p2, c1, k60, u'aluno').
+1759185113: Client esp32-001-web-mg5ot0c1-f2a9b8 closed its connection.
+1759185114: New client connected from 172.18.0.1:40240 as esp32-001-web-mg5pe9iy-58d28b (p2, c1, k60, u'aluno').
+1759185385: Client esp32-001-web-mg5pe9iy-58d28b closed its connection.
+1759185474: Client nodered36100986961aaa39 disconnected.
+1759185474: New connection from 172.18.0.4:54688 on port 1883.
+1759185474: New client connected from 172.18.0.4:54688 as nodered2005921bc65b8bd7 (p2, c1, k60, u'aluno').
+1759185506: Client nodered2005921bc65b8bd7 disconnected.
+1759185506: New connection from 172.18.0.4:56628 on port 1883.
+1759185506: New client connected from 172.18.0.4:56628 as nodered04a083bdc309c8a9 (p2, c1, k60, u'aluno').
+1759185533: New client connected from 172.18.0.1:47652 as esp32-001-web-mg5pe9iy-58d28b (p2, c1, k60, u'aluno').
+1759185593: Client esp32-001-web-mg5pe9iy-58d28b closed its connection.
+1759185601: New client connected from 172.18.0.1:38400 as esp32-001-web-mg5pe9iy-58d28b (p2, c1, k60, u'aluno').
+1759185777: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1759186037: Client nodered04a083bdc309c8a9 disconnected.
+1759186037: New connection from 172.18.0.4:52312 on port 1883.
+1759186037: New client connected from 172.18.0.4:52312 as nodered314c05aee37ed9b9 (p2, c1, k60, u'aluno').
+1759186107: Client nodered314c05aee37ed9b9 disconnected.
+1759186107: New connection from 172.18.0.4:53014 on port 1883.
+1759186107: New client connected from 172.18.0.4:53014 as noderedcb8a52ba32cb92e5 (p2, c1, k60, u'aluno').
+1759186644: Client noderedcb8a52ba32cb92e5 disconnected.
+1759186644: New connection from 172.18.0.4:56532 on port 1883.
+1759186644: New client connected from 172.18.0.4:56532 as nodered9f28b6bb3298ef51 (p2, c1, k60, u'aluno').
+1759187578: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1759188524: Client nodered9f28b6bb3298ef51 disconnected.
+1759188524: New connection from 172.18.0.4:39840 on port 1883.
+1759188524: New client connected from 172.18.0.4:39840 as nodered3dd071e77e8a52bb (p2, c1, k60, u'aluno').
+1759188540: Client esp32-001-web-mg5pe9iy-58d28b closed its connection.
+1759189029: Client nodered3dd071e77e8a52bb disconnected.
+1759189029: New connection from 172.18.0.4:39344 on port 1883.
+1759189029: New client connected from 172.18.0.4:39344 as nodered77dfed2e9085dea2 (p2, c1, k60, u'aluno').
+1759189039: New client connected from 172.18.0.1:57650 as esp32-001-web-mg5rqdxg-b9a419 (p2, c1, k60, u'aluno').
+1759189112: New client connected from 172.18.0.1:51216 as esp32-002-web-mg5rrygg-e82655 (p2, c1, k60, u'aluno').
+1759189120: Client esp32-002-web-mg5rrygg-e82655 closed its connection.
+1759189121: New client connected from 172.18.0.1:51230 as esp32-002-web-mg5rs5lk-ac5af3 (p2, c1, k60, u'aluno').
+1759189337: Client nodered77dfed2e9085dea2 disconnected.
+1759189337: New connection from 172.18.0.4:36788 on port 1883.
+1759189337: New client connected from 172.18.0.4:36788 as nodereda479d21020c6c6d7 (p2, c1, k60, u'aluno').
+1759189379: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1759189585: Client esp32-002-web-mg5rs5lk-ac5af3 closed its connection.
+1759189734: New client connected from 172.18.0.1:56406 as esp32-002-web-mg5rs5lk-ac5af3 (p2, c1, k60, u'aluno').
+1759189794: Client esp32-002-web-mg5rs5lk-ac5af3 closed its connection.
+1759189854: New client connected from 172.18.0.1:57640 as esp32-002-web-mg5rs5lk-ac5af3 (p2, c1, k60, u'aluno').
+1759189885: Client esp32-002-web-mg5rs5lk-ac5af3 closed its connection.
+1759189886: New client connected from 172.18.0.1:58742 as esp32-002-web-mg5rs5lk-ac5af3 (p2, c1, k60, u'aluno').
+1759190209: Client esp32-001-web-mg5rqdxg-b9a419 closed its connection.
+1759190212: Client esp32-002-web-mg5rs5lk-ac5af3 closed its connection.
+1759190382: Client nodereda479d21020c6c6d7 disconnected.
+1759190382: New connection from 172.18.0.4:35798 on port 1883.
+1759190382: New client connected from 172.18.0.4:35798 as nodered1d3d6f0345990671 (p2, c1, k60, u'aluno').
+1759190405: New client connected from 172.18.0.1:37910 as esp32-001-web-mg5sjnss-10e231 (p2, c1, k60, u'aluno').
+1759190406: New client connected from 172.18.0.1:37912 as esp32-002-web-mg5sjp0k-2c9e70 (p2, c1, k60, u'aluno').
+1759190433: Client nodered1d3d6f0345990671 disconnected.
+1759190433: New connection from 172.18.0.4:59742 on port 1883.
+1759190433: New client connected from 172.18.0.4:59742 as nodereddd8b255d4ed32285 (p2, c1, k60, u'aluno').
+1759190441: Client nodereddd8b255d4ed32285 disconnected.
+1759190441: New connection from 172.18.0.4:59756 on port 1883.
+1759190441: New client connected from 172.18.0.4:59756 as nodered3af30532fb64897a (p2, c1, k60, u'aluno').
+1759190482: Client nodered3af30532fb64897a disconnected.
+1759190482: New connection from 172.18.0.4:57416 on port 1883.
+1759190482: New client connected from 172.18.0.4:57416 as nodered0ea2d3dc0a60fcdc (p2, c1, k60, u'aluno').
+1759190485: Client esp32-002-web-mg5sjp0k-2c9e70 closed its connection.
+1759190486: Client esp32-001-web-mg5sjnss-10e231 closed its connection.
+1759190487: New client connected from 172.18.0.1:55780 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759190489: New client connected from 172.18.0.1:55794 as esp32-002-web-mg5slgyr-91780d (p2, c1, k60, u'aluno').
+1759190579: Client nodered0ea2d3dc0a60fcdc disconnected.
+1759190579: New connection from 172.18.0.4:41618 on port 1883.
+1759190579: New client connected from 172.18.0.4:41618 as noderedcb4571c6b2817f51 (p2, c1, k60, u'aluno').
+1759190878: Client noderedcb4571c6b2817f51 disconnected.
+1759190878: New connection from 172.18.0.4:44834 on port 1883.
+1759190878: New client connected from 172.18.0.4:44834 as noderedf198d04e52de1273 (p2, c1, k60, u'aluno').
+1759190886: Client noderedf198d04e52de1273 disconnected.
+1759190886: New connection from 172.18.0.4:45734 on port 1883.
+1759190886: New client connected from 172.18.0.4:45734 as noderede582584ee1faf304 (p2, c1, k60, u'aluno').
+1759190897: Client noderede582584ee1faf304 disconnected.
+1759190897: New connection from 172.18.0.4:39082 on port 1883.
+1759190897: New client connected from 172.18.0.4:39082 as nodered0835a57e60936749 (p2, c1, k60, u'aluno').
+1759190919: Client nodered0835a57e60936749 disconnected.
+1759190919: New connection from 172.18.0.4:49368 on port 1883.
+1759190919: New client connected from 172.18.0.4:49368 as nodered356419585a536831 (p2, c1, k60, u'aluno').
+1759191114: Client nodered356419585a536831 disconnected.
+1759191114: New connection from 172.18.0.4:50384 on port 1883.
+1759191114: New client connected from 172.18.0.4:50384 as noderedbddc9bdd54daffed (p2, c1, k60, u'aluno').
+1759191180: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1759191209: Client noderedbddc9bdd54daffed disconnected.
+1759191209: New connection from 172.18.0.4:36174 on port 1883.
+1759191209: New client connected from 172.18.0.4:36174 as noderedad2ad0081b90746d (p2, c1, k60, u'aluno').
+1759191269: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759191414: New client connected from 172.18.0.1:38938 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759191474: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759191512: Client noderedad2ad0081b90746d disconnected.
+1759191512: New connection from 172.18.0.4:56038 on port 1883.
+1759191512: New client connected from 172.18.0.4:56038 as noderedacd63d5b4caf1bd5 (p2, c1, k60, u'aluno').
+1759191534: New client connected from 172.18.0.1:53494 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759191594: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759191654: New client connected from 172.18.0.1:45676 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759191714: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759191774: New client connected from 172.18.0.1:34256 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759191834: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759191894: New client connected from 172.18.0.1:55192 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759191954: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759192014: New client connected from 172.18.0.1:38062 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759192074: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759192134: New client connected from 172.18.0.1:56404 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759192194: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759192254: New client connected from 172.18.0.1:55174 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759192314: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759192374: New client connected from 172.18.0.1:45628 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759192434: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759192463: Client noderedacd63d5b4caf1bd5 disconnected.
+1759192463: New connection from 172.18.0.4:52366 on port 1883.
+1759192463: New client connected from 172.18.0.4:52366 as nodered7fa5b839faee24a8 (p2, c1, k60, u'aluno').
+1759192473: New client connected from 172.18.0.1:37418 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759192473: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759192474: New client connected from 172.18.0.1:52586 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759192500: Client nodered7fa5b839faee24a8 disconnected.
+1759192501: New connection from 172.18.0.4:44676 on port 1883.
+1759192501: New client connected from 172.18.0.4:44676 as nodered8c50cb7b8060663e (p2, c1, k60, u'aluno').
+1759192656: Client nodered8c50cb7b8060663e disconnected.
+1759192656: New connection from 172.18.0.4:44988 on port 1883.
+1759192656: New client connected from 172.18.0.4:44988 as nodered8523d9ac6d75fb2a (p2, c1, k60, u'aluno').
+1759192666: Client esp32-002-web-mg5slgyr-91780d closed its connection.
+1759192671: Client nodered8523d9ac6d75fb2a disconnected.
+1759192671: New connection from 172.18.0.4:35544 on port 1883.
+1759192671: New client connected from 172.18.0.4:35544 as nodered0c137b22fd21c756 (p2, c1, k60, u'aluno').
+1759192682: New client connected from 172.18.0.1:42096 as esp32-002-web-mg5slgyr-91780d (p2, c1, k60, u'aluno').
+1759192754: Client nodered0c137b22fd21c756 disconnected.
+1759192754: New connection from 172.18.0.4:45586 on port 1883.
+1759192754: New client connected from 172.18.0.4:45586 as nodered3bdcb1acfb5e5d73 (p2, c1, k60, u'aluno').
+1759192880: Client nodered3bdcb1acfb5e5d73 disconnected.
+1759192880: New connection from 172.18.0.4:51484 on port 1883.
+1759192880: New client connected from 172.18.0.4:51484 as nodered52ebafc9434face2 (p2, c1, k60, u'aluno').
+1759192958: Client nodered52ebafc9434face2 disconnected.
+1759192958: New connection from 172.18.0.4:45128 on port 1883.
+1759192958: New client connected from 172.18.0.4:45128 as nodered12426c43c766d041 (p2, c1, k60, u'aluno').
+1759192963: Client nodered12426c43c766d041 disconnected.
+1759192963: New connection from 172.18.0.4:47242 on port 1883.
+1759192963: New client connected from 172.18.0.4:47242 as nodereddc11625cadfe3cf9 (p2, c1, k60, u'aluno').
+1759192981: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1759193150: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759193184: Client esp32-002-web-mg5slgyr-91780d closed its connection.
+1759193274: New client connected from 172.18.0.1:43126 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759193334: New client connected from 172.18.0.1:41292 as esp32-002-web-mg5slgyr-91780d (p2, c1, k60, u'aluno').
+1759193334: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759193394: New client connected from 172.18.0.1:58898 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759193394: Client esp32-002-web-mg5slgyr-91780d closed its connection.
+1759193442: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759193442: New client connected from 172.18.0.1:49626 as esp32-001-web-mg5slfkj-73db66 (p2, c1, k60, u'aluno').
+1759193442: New client connected from 172.18.0.1:55626 as esp32-002-web-mg5slgyr-91780d (p2, c1, k60, u'aluno').
+1759193443: Client esp32-002-web-mg5slgyr-91780d closed its connection.
+1759193444: New client connected from 172.18.0.1:49632 as esp32-002-web-mg5slgyr-91780d (p2, c1, k60, u'aluno').
+1759193529: Client nodereddc11625cadfe3cf9 disconnected.
+1759193529: New connection from 172.18.0.4:55208 on port 1883.
+1759193529: New client connected from 172.18.0.4:55208 as nodered7a7196ee42894f8f (p2, c1, k60, u'aluno').
+1759193721: Client esp32-002-web-mg5slgyr-91780d closed its connection.
+1759193725: Client esp32-001-web-mg5slfkj-73db66 closed its connection.
+1759193729: Client nodered7a7196ee42894f8f disconnected.
+1759193730: mosquitto version 2.0.22 terminating
+1759193730: Saving in-memory database to /mosquitto/data//mosquitto.db.

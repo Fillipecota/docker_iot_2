@@ -71,6 +71,12 @@
         "uriTabActive": "tab-uri-simple"
     },
     {
+        "id": "eeb7ee1c9de8691f",
+        "type": "websocket-listener",
+        "path": "/ws/devices",
+        "wholemsg": "false"
+    },
+    {
         "id": "b726d9293ec91073",
         "type": "mqtt in",
         "z": "8296850d5b2a0086",
@@ -104,7 +110,7 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 680,
+        "x": 660,
         "y": 160,
         "wires": []
     },
@@ -113,8 +119,8 @@
         "type": "function",
         "z": "8296850d5b2a0086",
         "name": "Parse info -> Device Upsert +// WS",
-        "func": "const deviceId = msg.payload.device_id;\nif (!deviceId) return null;\n\nmsg.collection = 'devices';\nmsg.operation = 'updateOne';\n\nconst update = {\n    $set: {\n        device_id: deviceId,\n        model: msg.payload.model || null,\n        firmware: msg.payload.firmware || null,\n        ip_address: msg.payload.ip_address || null,\n        location: msg.payload.location || null,\n        update_at: new Date(),\n        status: {\n            last_info_ts: new Date(),\n        },\n        raw: JSON.stringify(msg.payload)\n    },\n    $setOnInsert: { created_at: new Date(), _id: msg.payload._id }\n}\n\nmsg.payload = [{ device_Id: deviceId }, update, { upsert: true }];\n\n\nreturn msg;",
-        "outputs": 1,
+        "func": "const deviceId = msg.payload.device_id;\nif (!deviceId) return null;\n\nmsg.collection = 'devices';\nmsg.operation = 'updateOne';\n\nconst update = {\n    $set: {\n        device_id: deviceId,\n        model: msg.payload.model || null,\n        firmware: msg.payload.firmware || null,\n        ip_address: msg.payload.ip_address || null,\n        location: msg.payload.location || null,\n        update_at: new Date(),\n        status: {\n            last_info_ts: new Date(),\n        },\n        raw: JSON.stringify(msg.payload)\n    },\n    $setOnInsert: { created_at: new Date(), _id: msg.payload._id }\n}\n\nmsg.payload = [{ device_Id: deviceId }, update, { upsert: true }];\n\n\nmsg._wsEvent = {\n    kinf: 'telemetry',\n    id: deviceId,\n    data: msg.payload,\n    retain: msg.retain\n}\n\n\nreturn msg;",
+        "outputs": 2,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
@@ -125,6 +131,9 @@
         "wires": [
             [
                 "d396e6e9ecf5a313"
+            ],
+            [
+                "b6cbd6f57a3b5391"
             ]
         ]
     },
@@ -140,7 +149,7 @@
         "maxTimeMS": "0",
         "handleDocId": false,
         "name": "Device",
-        "x": 930,
+        "x": 950,
         "y": 360,
         "wires": [
             []
@@ -208,8 +217,8 @@
         "type": "function",
         "z": "8296850d5b2a0086",
         "name": "Parse Status -> Ws",
-        "func": "// payload: { type:'state'|'snapshot'|'ping', ... }\nconst retain = !!msg.retain;\nlet data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\nconst parts = (msg.topic || '').split('/');\nconst device_id = parts[1];\nif (!device_id) return null;\n\nconst now = new Date();\nconst set = { 'status.last_seen': now, updated_at: now };\n\nif (data.type === 'state') {\n    if (data.target && data.target.startsWith('led_')) {\n        set[`state.leds.${data.target}`] = (data.state === 'on');\n    }\n\n    if (data.target === 'servo_1' && Number.isFinite(+data.angle)) {\n        set['state.servo_1'] = +data.angle;\n    }\n    \n    if (data.target === 'motor1' && data.state) {\n        set['state.motor1'] = (data.state === 'on');\n    }\n    set['state.updated_at'] = now;\n} else if (data.type === 'snapshot') {\n    if (data.leds) {\n        for (const k of Object.keys(data.leds)) {\n            set[`state.leds.${k}`] = !!data.leds[k];\n        };\n    }\n\n    if (Number.isFinite(+data.servo_1)) {\n        set['state.servo_1'] = +data.servo_1;\n    }\n\n    if (typeof data.motor1 === 'boolean') {\n        set['state.motor1'] = data.motor1;\n    }\n\n    set['state.updated_at'] = now;\n} else if (data.type === 'ping') {\n    // presença apenas\n}\n\nmsg.collection = 'devices';\nmsg.operation = 'updateOne';\nmsg.payload = [\n    { device_id },\n    { $set: set, $setOnInsert: { created_at: now, device_id, _id: msg.payload._id } },\n    { upsert: true }];\nmsg._wsEvent = { kind: 'status', id: device_id, data, retain };\n\nreturn msg;",
-        "outputs": 1,
+        "func": "// payload: { type:'state'|'snapshot'|'ping', ... }\nconst retain = !!msg.retain;\nlet data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\nconst parts = (msg.topic || '').split('/');\nconst device_id = parts[1];\nif (!device_id) return null;\n\nconst now = new Date();\nconst set = { 'status.last_seen': now, updated_at: now };\n\nif (data.type === 'state') {\n    if (data.target && data.target.startsWith('led_')) {\n        set[`state.leds.${data.target}`] = (data.state === 'on');\n    }\n\n    if (data.target === 'servo_1' && Number.isFinite(+data.angle)) {\n        set['state.servo_1'] = +data.angle;\n    }\n\n    if (data.target === 'motor1' && data.state) {\n        set['state.motor1'] = (data.state === 'on');\n    }\n    set['state.updated_at'] = now;\n} else if (data.type === 'snapshot') {\n    if (data.leds) {\n        for (const k of Object.keys(data.leds)) {\n            set[`state.leds.${k}`] = !!data.leds[k];\n        };\n    }\n\n    if (Number.isFinite(+data.servo_1)) {\n        set['state.servo_1'] = +data.servo_1;\n    }\n\n    if (typeof data.motor1 === 'boolean') {\n        set['state.motor1'] = data.motor1;\n    }\n\n    set['state.updated_at'] = now;\n} else if (data.type === 'ping') {\n    // presença apenas\n}\n\nmsg.collection = 'devices';\nmsg.operation = 'updateOne';\nmsg.payload = [\n    { device_id },\n    { $set: set, $setOnInsert: { created_at: now, device_id, _id: msg.payload._id } },\n    { upsert: true }];\nmsg._wsEvent = { kind: 'status', id: device_id, data, retain };\n\nmsg._wsEvent = {\n    kinf: 'telemetry',\n    id: device_id,\n    data: msg.payload,\n    retain: msg.retain\n}\n\nreturn msg;",
+        "outputs": 2,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
@@ -220,6 +229,9 @@
         "wires": [
             [
                 "d396e6e9ecf5a313"
+            ],
+            [
+                "b6cbd6f57a3b5391"
             ]
         ]
     },
@@ -304,8 +316,8 @@
         "type": "function",
         "z": "8296850d5b2a0086",
         "name": "Parse Telemetry -> Ws",
-        "func": "let data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\n\nconst device_id = (msg.topic || '').split(\"/\")[1];\nif (!device_id) return null;\n\nconst obj = {\n    _id: msg.payload._id,\n    device_id,\n    sensor: msg.payload.sensor || 'unlnown',\n    unit: msg.payload.unit || null,\n    value: msg.payload.value || null,\n    created_at: new Date(msg.payload.ts || Date.now()),\n    sourcer: 'telemetry'\n}\n\nconst reading = {\n    collection: 'reading',\n    operation: 'insertOne',\n    payload: obj\n}\n\nconst device = {\n    collection: 'devices',\n    operation: 'updateOne',\n    payload: [\n        { device_id },\n        { $set: { 'status.last_seen': new Date(), updated_at: new Date() }, $setOnInsert: { created_at: new Date(), device_id, _id:msg.payload._id } },\n        { upsert: true }\n    ]\n}\n\nreturn [device, reading];\n",
-        "outputs": 2,
+        "func": "let data = {};\ntry {\n    data = (typeof msg.payload === 'string') ? JSON.parse(msg.payload) : msg.payload;\n} catch {\n    return null;\n}\n\nconst device_id = (msg.topic || '').split(\"/\")[1];\nif (!device_id) return null;\n\nconst obj = {\n    _id: msg.payload._id,\n    device_id,\n    sensor: msg.payload.sensor || 'unlnown',\n    unit: msg.payload.unit || null,\n    value: msg.payload.value || null,\n    created_at: new Date(msg.payload.ts || Date.now()),\n    sourcer: 'telemetry'\n}\n\nconst reading = {\n    collection: 'reading',\n    operation: 'insertOne',\n    payload: obj\n}\n\nconst device = {\n    collection: 'devices',\n    operation: 'updateOne',\n    payload: [\n        { device_id },\n        { $set: { 'status.last_seen': new Date(), updated_at: new Date() }, $setOnInsert: { created_at: new Date(), device_id, _id: msg.payload._id } },\n        { upsert: true }\n    ]\n}\n\nconst msgEs = {\n    _wsEvent: {\n        kinf: 'telemetry',\n        id: device_id,\n        data: msg.payload,\n        retain: msg.retain\n    }\n}\n\nreturn [device, reading, msgEs];\n",
+        "outputs": 3,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
@@ -319,6 +331,9 @@
             ],
             [
                 "ab4ca7b8f0c5a55f"
+            ],
+            [
+                "b6cbd6f57a3b5391"
             ]
         ]
     },
@@ -354,9 +369,103 @@
         "rh": 0,
         "inputs": 0,
         "x": 200,
+        "y": 580,
+        "wires": [
+            [
+                "39ad25276ed0b04f"
+            ]
+        ]
+    },
+    {
+        "id": "ec605613ee1a99d7",
+        "type": "debug",
+        "z": "8296850d5b2a0086",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "39ad25276ed0b04f",
+        "type": "function",
+        "z": "8296850d5b2a0086",
+        "name": "Parse ACK -> Device State",
+        "func": "const deviceId = msg.topic.split(\"/\")[1];\nif (!deviceId) return null;\n\nconst state = (msg.payload.state) ? { state: msg.payload.state } : { angle: +msg.payload.angle };\n\nconst msgCmd = {\n    collection: 'commands',\n    operation: \"updateOne\",\n    payload: [\n        { corr: msg.payload.corr },\n        {\n            $set: {\n                ack: {\n                    ts: new Date(),\n                    ok: msg.payload.ok,\n                    state_echo: state,\n\n                },\n                status: msg.payload.ok ? 'executed' : 'failed',\n                error: !msg.payload.ok ? 'ack not ok' : null\n            }\n\n        }\n    ]\n}\nconst set = {\n    status: {\n        last_Seen: new Date(),\n        updated_at: new Date(),\n    }\n}\nif (msg.payload.action === 'set' && msg.payload.target) {\n    if (msg.payload.target.startsWith('led_') && msg.payload.state) {\n        set[`state.leds.${msg.payload.target}`] = (msg.payload.state === 'on')\n    }\n\n    if (msg.payload.target.startsWith('servo_')) {\n        set[`state.${msg.payload.target}`] = (+msg.payload.angle)\n\n    }\n\n    if (msg.payload.target.startsWith('motor_')) {\n        set[`state.${msg.payload.target}`] = (msg.payload.state === 'on')\n\n    }\n\n    set[`state.updated_at`] = new Date();\n}\n\nconst msgDevices = {\n    collection: 'devices',\n    operation: 'updateOne',\n    payload: [\n        { deviceId: deviceId },\n        { $set: set }\n    ]\n}\n\nconst msgEs = {\n    _wsEvent: {\n        kinf: 'ACK',\n        id: deviceId,\n        data: msg.payload,\n        retain: msg.retain\n    }\n}\n\nreturn [msgDevices, msgCmd, msgEs ];",
+        "outputs": 3,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 580,
+        "wires": [
+            [
+                "d396e6e9ecf5a313"
+            ],
+            [
+                "4a26b94e09ae3a58"
+            ],
+            [
+                "b6cbd6f57a3b5391"
+            ]
+        ]
+    },
+    {
+        "id": "4a26b94e09ae3a58",
+        "type": "mongodb4",
+        "z": "8296850d5b2a0086",
+        "clientNode": "7ab9877dcbdd2e1e",
+        "mode": "collection",
+        "collection": "",
+        "operation": "",
+        "output": "toArray",
+        "maxTimeMS": "0",
+        "handleDocId": false,
+        "name": "Commands",
+        "x": 930,
         "y": 540,
         "wires": [
             []
+        ]
+    },
+    {
+        "id": "2411f625edc16df1",
+        "type": "websocket out",
+        "z": "8296850d5b2a0086",
+        "name": "WebSocket",
+        "server": "eeb7ee1c9de8691f",
+        "client": "",
+        "x": 1190,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "b6cbd6f57a3b5391",
+        "type": "function",
+        "z": "8296850d5b2a0086",
+        "name": "Format Ws",
+        "func": "if (!msg._wsEvent) return null;\nconst payload = JSON.stringify(msg._wsEvent);\n\nreturn { payload };",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 180,
+        "wires": [
+            [
+                "2411f625edc16df1"
+            ]
         ]
     },
     {
@@ -426,7 +535,7 @@
         "headers": {
             "Content-type": "application/json"
         },
-        "x": 750,
+        "x": 770,
         "y": 140,
         "wires": []
     },
@@ -461,7 +570,7 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 400,
+        "x": 560,
         "y": 220,
         "wires": []
     },
@@ -470,14 +579,14 @@
         "type": "function",
         "z": "1e3fa613f886d610",
         "name": "Create Commands",
-        "func": "const deviceId = msg.req.params.id;\nconst command = msg.req.body;\n\nconst value = (typeof command.on === 'boolean') ? { on: command.on } : { angle: + command.angle };\n\nconst commandDb = {\n    _id: msg.payload._id,\n    deviceId: deviceId,\n    target: command.target,\n    payload: value,\n    corr: command.corr,\n    request_by: 'dashboard',\n    request_at: new Date(),\n    ack: null,\n    status: 'sent',\n    delivery: {\n        sent_ts: new Date()\n    },\n    error: null\n}\n\nconst msgInsert = {\n    collection: \"commands\",\n    operation: \"insertOne\",\n    payload: [commandDb]\n}\n\nconst httpResponse = {\n    statusCode: 200,\n    payload: { ok: true, corr: commandDb.corr }\n}\n\nconst publishMqtt = {\n    topic: `device/${deviceId}/cmd`,\n    payload: {\n        target: command.target,\n        ...value,\n        corr: command.corr\n    },\n    qos: 1,\n    retain: false\n}\n\nreturn [msgInsert, httpResponse, publishMqtt];",
+        "func": "const deviceId = msg.req.params.id;\nconst command = msg.req.body;\n\nconst value = (typeof command.on === 'boolean') ? { on: command.on } : { angle: + command.angle };\n\nconst commandDb = {\n    _id: msg.payload._id,\n    deviceId: deviceId,\n    target: command.target,\n    payload: value,\n    corr: command.corr,\n    request_by: 'dashboard',\n    request_at: new Date(),\n    ack: null,\n    status: 'sent',\n    delivery: {\n        sent_ts: new Date()\n    },\n    error: null\n}\n\nconst msgInsert = {\n    collection: \"commands\",\n    operation: \"insertOne\",\n    payload: [commandDb]\n}\n\nconst httpResponse = {\n    ...msg, statusCode: 200, payload: { ok: true, corr: commandDb.corr }\n}\n\nconst publishMqtt = {\n    topic: `device/${deviceId}/cmd`,\n    payload: {\n        target: command.target,\n        ...value,\n        corr: command.corr\n    },\n    qos: 1,\n    retain: false\n}\n\nreturn [msgInsert, httpResponse, publishMqtt];",
         "outputs": 3,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 590,
+        "x": 550,
         "y": 300,
         "wires": [
             [
@@ -503,7 +612,7 @@
         "maxTimeMS": "0",
         "handleDocId": false,
         "name": "Commands",
-        "x": 830,
+        "x": 790,
         "y": 240,
         "wires": [
             []
@@ -516,7 +625,7 @@
         "name": "REPLY - 200",
         "statusCode": "",
         "headers": {},
-        "x": 830,
+        "x": 790,
         "y": 300,
         "wires": []
     },
@@ -534,7 +643,7 @@
         "correl": "",
         "expiry": "",
         "broker": "a8b67da708f56ade",
-        "x": 820,
+        "x": 780,
         "y": 360,
         "wires": []
     },
@@ -549,7 +658,7 @@
         "name": "",
         "field": "payload._id",
         "fieldType": "msg",
-        "x": 390,
+        "x": 350,
         "y": 300,
         "wires": [
             [
